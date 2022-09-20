@@ -53,55 +53,50 @@ loop
     imgName := concat(imageName, '.jpg');
     select image into i
     from imageTable
-    where nom = imgName
+    where imageName = imgName
     for update;
-    i.importFrom(ctx, ’file’, ’IMG’, imgName);
+    i.importFrom(ctx,'file','IMG', imgName);
     update imageTable
     set image = i
-where nom = imgName;
+    where imageName = imgName;
     commit;
 end loop;
+
+-- regen des signatures
+
+for ligne in mm
+loop
+    ligne.signature.generateSignature(ligne.image);
+    update imageTable
+    set signature = ligne.signature
+    where current of mm;
+    end loop;
+    commit;
+
+-- comparaison via oracle
+select signature into sig1
+    from imageTable
+    where imageName = '1.jpg';
+    select signature into sig2
+    from imageTable
+    where imageName = '1.jpg';
+    sim := ordsys.ordimageSignature.isSimilar(sig1, sig2,
+    'color = 0.5, texture = 0, shape = 0, location = 0', 10);
+    dbms_output.put_line(sim);
+
+
+
+select signature into sig1
+    from imageTable
+    where imageName = '1.jpg';
+    select signature into sig2
+    from imageTable
+    where imageName = '2.jpg';
+    dist := ordsys.ordimageSignature.evaluateScore(sig1, sig2, 'color = 0.5, texture = 0, shape =0, location = 0');
+    dbms_output.put_line('Distance=' || dist);
+
 end;
 
---declare
-    --i ordsys.ordimage;
-    --name string;
-    --ctx RAW(400) := NULL;
-    --ligne multimedia%ROWTYPE;
-    --cursor mm is
-    --select * from imageTable
-    --for update;
---begin
----- insertion des images vides
---for imageName in 1..500
---loop
-    --name = concat(imageName, '.jpg')
-    --insert into multimedia(nom, image, signature)
---values (name, ordsys.ordimage.init(), ordsys.ordimageSignature.init());
---commit;
---end loop
 
 
 
-
----- insertion d’une image, de contenu vide
-
----- chargement du contenu de l’image a partir du fichier
---select image into i
---from multimedia
---where nom = ’image1.jpg’
---for update;
---i.importFrom(ctx, ’file’, ’IMG’, ’image1.jpg’);
---update multimedia
---set image = i
---where nom = ’image1.jpg’;
---commit;
----- proceder de meme pour les autres images
----- generation des signatures
---for ligne in mm loop
---ligne.signature.generateSignature(ligne.image);
---update multimedia
---set signature = ligne.signature
---where current of mm;
---endloop;
---commit;
