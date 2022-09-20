@@ -33,6 +33,10 @@ declare
     imgName varchar2(50);
     ctx RAW(400) := NULL;
     ligne imageTable%ROWTYPE;
+
+    cursor mm is
+    select * from imageTable
+    for update;
 begin
 -- insertion des images vides
 for imageName in 1..500
@@ -41,6 +45,21 @@ loop
     insert into imageTable(imageName, image, signature, width, height, grayHistogram, redHistogram, greenHistogram, blueHistogram, redRatio, greenRatio, blueRatio, averageColor, gradientNormMean, outlinesMinX , outlinesMinY,outlinesMaxX,outlinesMaxY,outlinesBarycenterX,outlinesBarycenterY ,nbOutlinePixel ,isRGB)
 values (imgName, ordsys.ordimage.init(), ordsys.ordimageSignature.init(), null,null, null, null, null, null, null, null, null, null, null, null,null,null,null,null,null,null,null );
 commit;
+end loop;
+
+-- ajout des vrais images & de la signature
+for imageName in 1..500
+loop
+    imgName := concat(imageName, '.jpg');
+    select image into i
+    from imageTable
+    where nom = imgName
+    for update;
+    i.importFrom(ctx, ’file’, ’IMG’, imgName);
+    update imageTable
+    set image = i
+where nom = imgName;
+    commit;
 end loop;
 end;
 
