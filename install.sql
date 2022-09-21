@@ -37,6 +37,11 @@ declare
     cursor mm is
     select * from imageTable
     for update;
+
+    sig1 ordsys.ordimageSignature;
+    sig2 ordsys.ordimageSignature;
+    sim integer;
+    dist float;
 begin
 -- insertion des images vides
 for imageName in 1..500
@@ -98,5 +103,52 @@ select signature into sig1
 end;
 
 
+CREATE OR REPLACE PROCEDURE InsertImageMetaDatas
+        (inImageName in String,
+        inWidth in INT,
+        inHeight in INT,
+        inGrayHistogram in HISTOGRAM,
+        inRedHistogram in HISTOGRAM,
+        inBlueHistogram in HISTOGRAM,
+        inGreenHistogram in HISTOGRAM,
+        inRedRatio in double precision,
+        inBlueRatio in double precision,
+        inGreenRatio in double precision,
+        inAverageColor in int,
+        inGradientNormMean in double precision,
+        inOutlinesMinX in int,
+        inOutlinesMinY in int,
+        inOutlinesMaxX in int,
+        inOutlinesMaxY in int,
+        inOutlinesBarycenterX in int,
+        inOutlinesBarycenterY in int,
+        inNbOutlinePixel in int,
+        inIsRGB in number
+       )
+      IS
 
+      BEGIN
+            update imagetable
+            set
+            width = inWidth,
+            height = inHeight,
+            grayhistogram = inGrayHistogram,
+            greenhistogram = inGreenHistogram,
+            bluehistogram = inBlueHistogram,
+            redhistogram = inRedHistogram,
+            redratio = inRedRatio,
+            greenratio = inGreenRatio,
+            blueratio = inBlueRatio,
+            averagecolor = inAverageColor,
+            gradientnormmean = inGradientNormMean,
+            outlinesminx = inOutlinesMinX,
+            outlinesminy = inOutlinesMinY,
+            outlinesmaxx = inOutlinesMaxX,
+            outlinesmaxy = inOutlinesMaxY,
+            outlinesbarycenterx = inOutlinesBarycenterX,
+            outlinesbarycentery = inOutlinesBarycenterY,
+            isrgb = inIsRGB
+            where
+            imagename = inImageName;
+      END;
 
