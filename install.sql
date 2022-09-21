@@ -82,10 +82,10 @@ loop
 select signature into sig1
     from imageTable
     where imageName = '1.jpg';
-    select signature into sig2
+select signature into sig2
     from imageTable
     where imageName = '1.jpg';
-    sim := ordsys.ordimageSignature.isSimilar(sig1, sig2,
+sim := ordsys.ordimageSignature.isSimilar(sig1, sig2,
     'color = 0.5, texture = 0, shape = 0, location = 0', 10);
     dbms_output.put_line(sim);
 
@@ -151,4 +151,64 @@ CREATE OR REPLACE PROCEDURE InsertImageMetaDatas
             where
             imagename = inImageName;
       END;
+
+
+-- compare images using oracle
+
+CREATE OR REPLACE FUNCTION DistanceImageOracle
+           (
+            imgname1 in varchar2,
+            imgname2 in varchar2
+           )
+          RETURN double precision
+          IS
+            sig1 ordsys.ordimageSignature;
+            sig2 ordsys.ordimageSignature;
+            dist float;
+          BEGIN
+                select signature into sig1
+                from imageTable
+                where imageName = imgname1;
+                select signature into sig2
+                from imageTable
+                where imageName = imgname2;
+                dist := ordsys.ordimageSignature.evaluateScore(sig1, sig2, 'color = 0.5, texture = 0, shape =0, location = 0');
+                return dist;
+          END;
+
+select imagename from imageTable where distanceimageoracle('1.jpg', imagename ) < 8;
+
+-- compare images using metadatas
+
+
+CREATE OR REPLACE FUNCTION DistanceImageMetadatas
+           (
+            imgname1 in varchar2,
+            imgname2 in varchar2
+           )
+          RETURN double precision
+          IS
+            histo1 histogram;
+            histo2 histogram;
+            distHisto float;
+          BEGIN
+                distHisto := 0;
+                select grayhistogram into histo1
+                from imageTable
+                where imageName = imgname1;
+                select grayhistogram into histo2
+                from imageTable
+                where imageName = imgname2;
+                for i in 0..255
+                loop
+                    distHisto := distHisto + POWER(histo1(i) - histo2(i), 2);
+                end loop;
+
+                distHisto := SQRT(distHisto);
+                return distHisto;
+          END;
+
+
+select imagename from imageTable where distanceimagemetadatas('1.jpg', imagename) < 100;
+
 
